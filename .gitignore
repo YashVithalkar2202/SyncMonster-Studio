@@ -1,0 +1,12 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.sqlite3
+
+# Node
+node_modules/
+dist/
+
+# Environment
+.env
