@@ -5,6 +5,8 @@
 ![image alt](https://github.com/YashVithalkar2202/SyncMonster-Studio/blob/main/image.png)
 
 
+![image alt](https://github.com/YashVithalkar2202/SyncMonster-Studio/blob/81322072eea901e56be5504c6054e8d508dbe8fc/Screenshot%20from%202026-02-14%2023-42-38.png)
+
 
 ## 🛠️ Tech Stack
 
