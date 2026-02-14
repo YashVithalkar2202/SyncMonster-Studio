@@ -2,6 +2,10 @@
 
 **SyncMonster Studio** is a professional-grade video asset management platform. It allows users to manage video workflows, track processing statuses, and perform video splitting operations. Built with a robust **FastAPI** backend and a high-fidelity **React** dashboard, it features secure **JWT Authentication** and real-time status simulations.
 
+
+
+![SyncMonster Studio Dashboard](https://github.com/YashVithalkar2202/SyncMonster-Studio/blob/main/image.png)
+
 ## 🛠️ Tech Stack
 
 * **Frontend:** React (Vite), Bootstrap 5, Axios, React Router.
