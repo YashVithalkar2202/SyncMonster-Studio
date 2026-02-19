@@ -1,140 +1,187 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { getVideo, splitVideo } from '../api';
+import React, { useState, useRef, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import Slider from 'rc-slider';
+import 'rc-slider/assets/index.css';
+import { 
+  Scissors, 
+  ArrowLeft, 
+  Info, 
+  Layers, 
+  CheckCircle2,
+  Maximize
+} from 'lucide-react';
+import api from '../api';
 
 const VideoDetails = () => {
   const { id } = useParams();
-  const [video, setVideo] = useState(null);
-  const [segments, setSegments] = useState([{ start: 0, end: 10 }]);
-  const [results, setResults] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const navigate = useNavigate();
+  const [videoData, setVideoData] = useState(null);
+  const [range, setRange] = useState([0, 1]);
+  const [duration, setDuration] = useState(0);
+  const [processing, setProcessing] = useState(false);
+  const videoRef = useRef(null);
 
   useEffect(() => {
-    getVideo(id).then(res => setVideo(res.data));
+    if (id && id !== 'undefined') {
+      api.get(`/videos/${id}`)
+        .then(res => setVideoData(res.data))
+        .catch(err => console.error("Error fetching video:", err));
+    }
   }, [id]);
 
-//   const handleSplit = async () => {
-//     setIsProcessing(true);
-//     try {
-//       const res = await splitVideo(id, segments);
-//       setResults(res.data.segments);
-//       const updated = await getVideo(id);
-//       setVideo(updated.data);
-//     } catch (err) {
-//       alert("Processing Error: " + (err.response?.data?.detail || "Check timestamps"));
-//       const updated = await getVideo(id);
-//       setVideo(updated.data);
-//     } finally {
-//       setIsProcessing(false);
-//     }
-//   };
+  const onLoadedMetadata = () => {
+    if (videoRef.current) {
+      const videoDuration = videoRef.current.duration;
+      setDuration(videoDuration);
+      setRange([0, videoDuration > 15 ? 15 : videoDuration]);
+    }
+  };
 
-const handleSplit = async () => {
-  // 1. Frontend par simulation shuru karein
-  setIsProcessing(true);
-  
-  // Hum video object ko local state mein "Processing" set kar dete hain 
-  // taaki UI turant update ho jaye backend call se pehle
-  setVideo(prev => ({ ...prev, status: 'Processing' }));
+  const handleSliderChange = (val) => {
+    setRange(val);
+    if (videoRef.current) {
+      videoRef.current.currentTime = val[0]; 
+    }
+  };
 
-  // 2. Artificial wait (3 seconds) taaki user ko "Processing" spinner dikhe
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  const handleSplit = async () => {
+    setProcessing(true);
+    try {
+      await api.post(`/videos/${id}/split`, {
+          segments: [{ start: range[0], end: range[1] }]
+      });
+      alert("Neural processing started! Track progress in Workspace.");
+      navigate('/');
+    } catch (err) {
+      alert("Error: " + (err.response?.data?.detail || "Split failed"));
+    } finally {
+      setProcessing(false);
+    }
+  };
 
-  try {
-    const res = await splitVideo(id, segments);
-    setResults(res.data.segments);
-    
-    // Success hone par backend se latest "Ready" status le aayenge
-    const updated = await getVideo(id);
-    setVideo(updated.data);
-  } catch (err) {
-    // Agar backend error deta hai (invalid segments), toh local UI ko "Failed" dikhayenge
-    setVideo(prev => ({ ...prev, status: 'Failed' }));
-    alert("Processing Error: " + (err.response?.data?.detail || "Check timestamps"));
-  } finally {
-    setIsProcessing(false);
-  }
-};
-
-  if (!video) return <div className="text-center mt-5"><div className="spinner-border text-primary"></div></div>;
+  if (!videoData) return (
+    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+      <div className="spinner-grow text-primary" role="status"></div>
+    </div>
+  );
 
   return (
-    <div className="w-100 animate__animated animate__fadeIn">
-      <div className="row g-5">
-        {/* Left Side: Asset Info */}
-        <div className="col-lg-4">
-          <div className="card border-0 shadow-lg h-100" style={{ borderRadius: '25px' }}>
-            <div className="card-body p-5 text-center">
-              <div className="display-1 mb-4">📹</div>
-              <h2 className="fw-bold mb-3">{video.title}</h2>
-              <span className={`badge rounded-pill px-4 py-2 mb-4 fs-6 ${video.status === 'Ready' ? 'bg-success' : video.status === 'Failed' ? 'bg-danger' : 'bg-primary'}`}>
-                {video.status}
-              </span>
-              <div className="text-start bg-light p-4 rounded-4 shadow-sm border">
-                <p className="mb-2"><strong>Duration:</strong> {video.duration}s</p>
-                <p className="mb-0 text-muted small text-break"><strong>Path:</strong> {video.video_url}</p>
-              </div>
-            </div>
-          </div>
+    <div className="py-4 px-4 min-vh-100" style={{ backgroundColor: '#f8fafc' }}>
+      <div className="container-fluid max-width-xl mx-auto">
+        {/* Navigation Header */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <button 
+            onClick={() => navigate('/')} 
+            className="btn btn-white shadow-sm rounded-pill px-4 py-2 d-flex align-items-center border-0 bg-white"
+            style={{ color: '#64748b' }}
+          >
+            <ArrowLeft size={18} className="me-2" /> Back to Workspace
+          </button>
+          <span className="badge bg-indigo-100 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-25" style={{ backgroundColor: '#eef2ff' }}>
+            <Layers size={14} className="me-1" /> Precision Editor Mode
+          </span>
         </div>
 
-        {/* Right Side: Logic & Splitter */}
-        <div className="col-lg-8">
-          <div className="card border-0 shadow-lg mb-4" style={{ borderRadius: '25px' }}>
-            <div className="card-header bg-dark text-white p-4" style={{ borderTopLeftRadius: '25px', borderTopRightRadius: '25px' }}>
-              <h4 className="mb-0 fw-bold">Processing Workflow</h4>
-            </div>
-            <div className="card-body p-5">
-              {video.status === 'Failed' && (
-                <div className="alert alert-danger border-0 shadow-sm mb-4">
-                  <strong>❌ Split Failed:</strong> One or more segments exceed the video length or are formatted incorrectly.
-                </div>
-              )}
-
-              <h5 className="mb-4 fw-bold text-secondary">Define Segments</h5>
-              {segments.map((s, i) => (
-                <div key={i} className="row g-3 mb-4 align-items-end">
-                  <div className="col-md-5">
-                    <label className="form-label small fw-bold text-muted">START TIME (S)</label>
-                    <input type="number" className="form-control form-control-lg bg-light" value={s.start} 
-                           onChange={e => { const n = [...segments]; n[i].start = parseFloat(e.target.value); setSegments(n); }} />
+        <div className="row g-4">
+          {/* Main Video Section */}
+          <div className="col-xl-8">
+            <div className="card border-0 shadow-sm overflow-hidden" style={{ borderRadius: '24px' }}>
+              {/* VIDEO PLAYER WITH NATIVE CONTROLS ENABLED */}
+              <div className="bg-black d-flex align-items-center justify-content-center" style={{ minHeight: '450px', backgroundColor: '#000' }}>
+                <video 
+                  ref={videoRef} 
+                  className="w-100 shadow-lg"
+                  onLoadedMetadata={onLoadedMetadata}
+                  src={`http://localhost:8000/${videoData.file_path}`}
+                  controls // <--- Yeh saare play/pause/volume controls wapas laayega
+                  controlsList="nodownload" // Download option hide karne ke liye
+                  style={{ maxHeight: '500px' }}
+                />
+              </div>
+              
+              <div className="card-body p-4 bg-white border-top">
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <div className="d-flex align-items-center">
+                    <div className="p-2 bg-primary bg-opacity-10 rounded-3 me-3">
+                      <Maximize size={20} className="text-primary" />
+                    </div>
+                    <div>
+                      <h6 className="mb-0 fw-bold">Timeline Selection</h6>
+                      <small className="text-muted">Current Range: {range[0].toFixed(1)}s - {range[1].toFixed(1)}s</small>
+                    </div>
                   </div>
-                  <div className="col-md-5">
-                    <label className="form-label small fw-bold text-muted">END TIME (S)</label>
-                    <input type="number" className="form-control form-control-lg bg-light" value={s.end} 
-                           onChange={e => { const n = [...segments]; n[i].end = parseFloat(e.target.value); setSegments(n); }} />
+                </div>
+
+                {/* Timeline Slider */}
+                <div className="px-2 pt-2 pb-4">
+                  <Slider
+                    range
+                    min={0}
+                    max={duration || 100}
+                    step={0.1}
+                    value={range}
+                    onChange={handleSliderChange}
+                    trackStyle={[{ backgroundColor: '#6366f1', height: 10, borderRadius: '5px' }]}
+                    handleStyle={[
+                      { borderColor: '#6366f1', height: 26, width: 26, marginTop: -8, backgroundColor: '#fff', borderWeight: '3px' },
+                      { borderColor: '#6366f1', height: 26, width: 26, marginTop: -8, backgroundColor: '#fff', borderWeight: '3px' }
+                    ]}
+                    railStyle={{ backgroundColor: '#f1f5f9', height: 10, borderRadius: '5px' }}
+                  />
+                  <div className="d-flex justify-content-between mt-2 text-muted small fw-bold">
+                    <span>0:00</span>
+                    <span>{duration ? duration.toFixed(0) : '0'}s</span>
                   </div>
                 </div>
-              ))}
-
-              {(isProcessing || video.status === 'Processing') ? (
-                <button className="btn btn-primary btn-lg w-100 py-3 rounded-pill disabled shadow-none">
-                  <span className="spinner-border spinner-border-sm me-3"></span>
-                  Processing Engine Active...
-                </button>
-              ) : (
-                <button className="btn btn-primary btn-lg w-100 py-3 rounded-pill shadow fw-bold" onClick={handleSplit}>
-                  Initialize Video Split ⚡
-                </button>
-              )}
+              </div>
             </div>
           </div>
 
-          {results && (
-            <div className="card border-0 shadow-lg bg-success text-white" style={{ borderRadius: '25px' }}>
-              <div className="card-body p-4">
-                <h5 className="fw-bold mb-3">✅ Output Generated Successfully</h5>
-                <ul className="mb-0 list-unstyled">
-                  {results.map(r => (
-                    <li key={r.segment_id} className="bg-white text-dark p-3 rounded-4 mb-2 shadow-sm d-flex justify-content-between">
-                      <strong>Segment #{r.segment_id}</strong>
-                      <code className="text-primary">{r.url}</code>
-                    </li>
-                  ))}
-                </ul>
+          {/* Right Panel */}
+          <div className="col-xl-4">
+            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '24px' }}>
+              <div className="d-flex align-items-center mb-4">
+                <div className="p-2 bg-light rounded-3 me-3">
+                  <Info size={20} className="text-dark" />
+                </div>
+                <h5 className="mb-0 fw-bold">Asset Details</h5>
               </div>
+
+              <div className="mb-4">
+                <label className="small text-muted fw-bold mb-1 d-block">PROJECT TITLE</label>
+                <p className="fw-bold fs-5 text-dark">{videoData.title}</p>
+              </div>
+
+              <div className="p-3 rounded-4 bg-light border mb-4">
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted small">Selected Duration</span>
+                  <span className="text-primary fw-bold">{(range[1] - range[0]).toFixed(2)}s</span>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <span className="text-muted small">Status</span>
+                  <span className="badge bg-success bg-opacity-10 text-success border-0 px-2">Ready for Processing</span>
+                </div>
+              </div>
+
+              <div className="alert border-0 rounded-4 d-flex align-items-start gap-3 mb-5" style={{ backgroundColor: '#f0fdf4', color: '#166534' }}>
+                <CheckCircle2 size={18} className="mt-1 flex-shrink-0" />
+                <small>Using <b>Direct Stream Copy</b> for instant, lossless video splitting.</small>
+              </div>
+
+              <button 
+                className={`btn btn-primary w-100 py-3 rounded-pill shadow-lg border-0 mt-auto d-flex align-items-center justify-content-center gap-2 ${processing ? 'disabled' : ''}`}
+                onClick={handleSplit}
+                disabled={processing || duration === 0}
+                style={{ backgroundColor: '#6366f1', fontSize: '1.1rem', fontWeight: 'bold' }}
+              >
+                {processing ? (
+                  <><div className="spinner-border spinner-border-sm"></div> Running Engine...</>
+                ) : (
+                  <><Scissors size={20} /> Process Neural Split</>
+                )}
+              </button>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
 from .models import VideoStatus
@@ -9,13 +9,11 @@ class Segment(BaseModel):
     start: float = Field(..., ge=0, description="Start time in seconds")
     end: float = Field(..., ge=0, description="End time in seconds")
 
-# --- Request Schemas (What the user sends TO the API) ---
+# --- Request Schemas ---
 
 class VideoCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = Field(None, max_length=500)
-    video_url: str 
-    duration: float = Field(..., gt=0)
 
 class VideoUpdate(BaseModel):
     title: Optional[str] = None
@@ -25,28 +23,26 @@ class VideoUpdate(BaseModel):
 class VideoSplitRequest(BaseModel):
     segments: List[Segment]
 
-# --- Response Schemas (What the API sends back TO the user) ---
+# --- Response Schemas ---
 
 class VideoResponse(BaseModel):
     id: int
     title: str
-    description: Optional[str]
-    video_url: str
-    duration: float
-    status: VideoStatus
+    description: Optional[str] = None
+    video_url: Optional[str] = None 
+    duration: Optional[float] = None
+    file_path: Optional[str] = None 
     created_at: datetime
 
     class Config:
-        # This is CRITICAL. It tells Pydantic to read data 
-        # even if it's a SQL Alchemy model, not just a dictionary.
         from_attributes = True
 
 class SplitSegmentResponse(BaseModel):
-    segment_id: int
+    id: int 
     url: str
     start: float
     end: float
 
 class VideoSplitResponse(BaseModel):
     parent_id: int
-    segments: List[SplitSegmentResponse]
+    segments: List[dict] 

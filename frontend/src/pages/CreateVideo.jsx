@@ -1,18 +1,40 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createVideo } from '../api';
+import api from '../api'; // make sure this is your axios instance
 
 const CreateVideo = () => {
-  const [formData, setFormData] = useState({ title: '', description: '', video_url: '', duration: '' });
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await createVideo({ ...formData, duration: parseFloat(formData.duration) });
-    navigate('/');
-  };
 
-  
+    if (!selectedFile) {
+      alert("Please select a video file");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("file", selectedFile);
+
+    try {
+      await api.post("/videos/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed");
+    }
+  };
 
   return (
     <div className="row justify-content-center py-5">
@@ -21,34 +43,54 @@ const CreateVideo = () => {
           <div className="card-body p-5">
             <div className="text-center mb-5">
               <span className="display-3">🚀</span>
-              <h2 className="fw-bold mt-3">Add New Resource</h2>
-              <p className="text-muted">Register an asset to the SyncMonster neural engine.</p>
+              <h2 className="fw-bold mt-3">Upload Video</h2>
+              <p className="text-muted">Upload a video file to the backend server.</p>
             </div>
-            
+
             <form onSubmit={handleSubmit}>
+              
+              {/* Title */}
               <div className="form-floating mb-4">
-                <input type="text" className="form-control border-0 bg-light rounded-4" id="t" placeholder="Title" required 
-                       onChange={e => setFormData({...formData, title: e.target.value})} />
-                <label htmlFor="t" className="text-muted ms-2">Video Title</label>
+                <input
+                  type="text"
+                  className="form-control border-0 bg-light rounded-4"
+                  placeholder="Title"
+                  required
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+                <label className="text-muted ms-2">Video Title</label>
               </div>
+
+              {/* Description */}
               <div className="form-floating mb-4">
-                <textarea className="form-control border-0 bg-light rounded-4" id="d" style={{ height: '120px' }} placeholder="Desc"
-                          onChange={e => setFormData({...formData, description: e.target.value})} />
-                <label htmlFor="d" className="text-muted ms-2">Description / Metadata</label>
+                <textarea
+                  className="form-control border-0 bg-light rounded-4"
+                  style={{ height: '120px' }}
+                  placeholder="Description"
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+                <label className="text-muted ms-2">Description</label>
               </div>
-              <div className="form-floating mb-4">
-                <input type="url" className="form-control border-0 bg-light rounded-4" id="u" placeholder="URL" required
-                       onChange={e => setFormData({...formData, video_url: e.target.value})} />
-                <label htmlFor="u" className="text-muted ms-2">Cloud Storage URL (S3/GCP)</label>
+
+              {/* File Upload */}
+              <div className="mb-5">
+                <label className="form-label fw-bold">Select Video File</label>
+                <input
+                  type="file"
+                  className="form-control"
+                  accept="video/*"
+                  required
+                  onChange={(e) => setSelectedFile(e.target.files[0])}
+                />
               </div>
-              <div className="form-floating mb-5">
-                <input type="number" className="form-control border-0 bg-light rounded-4" id="dur" placeholder="60" required
-                       onChange={e => setFormData({...formData, duration: e.target.value})} />
-                <label htmlFor="dur" className="text-muted ms-2">Total Duration (Seconds)</label>
-              </div>
-              <button type="submit" className="btn btn-primary w-100 py-4 fs-5 fw-bold rounded-pill shadow-lg">
-                Submit to Library
+
+              <button
+                type="submit"
+                className="btn btn-primary w-100 py-4 fs-5 fw-bold rounded-pill shadow-lg"
+              >
+                Upload Video
               </button>
+
             </form>
           </div>
         </div>
