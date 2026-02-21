@@ -27,8 +27,6 @@ if not os.path.exists(UPLOAD_DIR):
 
 # -------------------------------
 # Mount uploads folder
-# Files accessible at:
-# http://localhost:8000/uploads/<filename>
 # -------------------------------
 app.mount(
     "/uploads",
@@ -37,13 +35,17 @@ app.mount(
 )
 
 # -------------------------------
-# CORS Configuration
-# React (Vite) default port 5173
+# CORS Configuration (Updated for Local & Server)
 # -------------------------------
+# Render dashboard mein jo ALLOWED_ORIGINS daalenge, ye wahan se uthayega.
+# Agar variable nahi mila (Local), toh localhost:5173 use karega.
+origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")
+allowed_origins = [origin.strip() for origin in origins_str.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], 
-    allow_credentials=True,
+    allow_origins=allowed_origins, 
+    allow_credentials=True, # JWT tokens ke liye ye True hona zaroori hai
     allow_methods=["*"],
     allow_headers=["*"],
 )
