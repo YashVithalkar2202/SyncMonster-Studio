@@ -20,6 +20,10 @@ const VideoDetails = () => {
   const [duration, setDuration] = useState(0);
   const [processing, setProcessing] = useState(false);
   const videoRef = useRef(null);
+  const [segments, setSegments] = useState([]);
+
+  // Production Base URL logic
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
   useEffect(() => {
     if (id && id !== "undefined") {
@@ -38,6 +42,28 @@ const VideoDetails = () => {
     }
   };
 
+  const fetchSegments = () => {
+    if (id && id !== "undefined") {
+      api
+        .get(`/videos/${id}/segments`)
+        .then((res) => setSegments(res.data))
+        .catch((err) => console.log("Segments not ready yet"));
+    }
+  };
+
+  useEffect(() => {
+    if (!id || id === "undefined") return;
+
+    fetchSegments(); // Initial fetch
+
+    // Polling logic optimized for production
+    const interval = setInterval(() => {
+      fetchSegments();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [id]);
+
   const handleSliderChange = (val) => {
     setRange(val);
     if (videoRef.current) {
@@ -51,7 +77,8 @@ const VideoDetails = () => {
       await api.post(`/videos/${id}/split`, {
         segments: [{ start: range[0], end: range[1] }],
       });
-      alert("Neural processing started! Track progress in Workspace.");
+      alert("Neural processing started! Track progress in the gallery below.");
+      // Navigate back to workspace to see status update
       navigate("/");
     } catch (err) {
       alert("Error: " + (err.response?.data?.detail || "Split failed"));
@@ -97,21 +124,10 @@ const VideoDetails = () => {
               className="card border-0 shadow-sm overflow-hidden"
               style={{ borderRadius: "24px" }}
             >
-              {/* VIDEO PLAYER WITH NATIVE CONTROLS ENABLED */}
               <div
                 className="bg-black d-flex align-items-center justify-content-center"
                 style={{ minHeight: "450px", backgroundColor: "#000" }}
               >
-                {/* <video 
-                  ref={videoRef} 
-                  className="w-100 shadow-lg"
-                  onLoadedMetadata={onLoadedMetadata}
-                  src={`http://localhost:8000/${videoData.file_path}`}
-                  controls // <--- Yeh saare play/pause/volume controls wapas laayega
-                  controlsList="nodownload" // Download option hide karne ke liye
-                  style={{ maxHeight: '500px' }}
-                /> */}
-
                 <video
                   ref={videoRef}
                   className="w-100 shadow-lg"
@@ -119,7 +135,7 @@ const VideoDetails = () => {
                   src={
                     videoData.video_url?.startsWith("http")
                       ? videoData.video_url
-                      : `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/${videoData.file_path}`
+                      : `${API_BASE_URL}/${videoData.file_path}`
                   }
                   controls
                   controlsList="nodownload"
@@ -186,6 +202,90 @@ const VideoDetails = () => {
                   <div className="d-flex justify-content-between mt-2 text-muted small fw-bold">
                     <span>0:00</span>
                     <span>{duration ? duration.toFixed(0) : "0"}s</span>
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-4 border-top">
+                  <div className="d-flex align-items-center mb-4">
+                    <div
+                      className="p-2 bg-indigo-100 rounded-3 me-3"
+                      style={{ backgroundColor: "#eef2ff" }}
+                    >
+                      <Layers size={20} className="text-primary" />
+                    </div>
+                    <h5 className="mb-0 fw-bold">Processed Neural Segments</h5>
+                  </div>
+
+                  <div className="row g-3">
+                    {segments.length > 0 ? (
+                      segments.map((seg) => (
+                        <div key={seg.id} className="col-md-6 col-lg-4">
+                          <div
+                            className="card border-0 shadow-sm h-100 bg-white"
+                            style={{
+                              borderRadius: "18px",
+                              border: "1px solid #edf2f7",
+                            }}
+                          >
+                            <div className="p-2">
+                              <video
+                                // Production URL handling for segments
+                                src={
+                                  seg.url?.startsWith("http")
+                                    ? seg.url
+                                    : `${API_BASE_URL}${seg.url?.startsWith("/") ? "" : "/"}${seg.url}`
+                                }
+                                className="w-100 rounded-3"
+                                style={{
+                                  height: "140px",
+                                  objectFit: "cover",
+                                  backgroundColor: "#000",
+                                }}
+                              />
+                            </div>
+                            <div className="card-body pt-0">
+                              <div
+                                className="text-truncate small fw-bold text-dark mb-3"
+                                title={seg.filename}
+                              >
+                                {seg.filename}
+                              </div>
+                              <a
+                                href={
+                                  seg.url?.startsWith("http")
+                                    ? seg.url
+                                    : `${API_BASE_URL}${seg.url?.startsWith("/") ? "" : "/"}${seg.url}`
+                                }
+                                download={seg.filename}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-sm w-100 rounded-pill d-flex align-items-center justify-content-center gap-2 py-2"
+                                style={{
+                                  backgroundColor: "#eef2ff",
+                                  color: "#6366f1",
+                                  border: "1px solid #e0e7ff",
+                                  fontWeight: "600",
+                                }}
+                              >
+                                Download Clip
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-12">
+                        <div
+                          className="text-center py-5 rounded-4 bg-light border-dashed"
+                          style={{ border: "2px dashed #e2e8f0" }}
+                        >
+                          <p className="text-muted mb-0">
+                            No segments found yet. Once the engine finishes,
+                            your clips will appear here automatically.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
