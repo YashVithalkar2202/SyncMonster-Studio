@@ -4,11 +4,10 @@ from typing import List, Optional
 import shutil
 import os
 
-# Relative imports: '..' ka matlab ek level up (backend/ folder mein)
-from ..database import get_db
-from .. import models, schemas
-from ..services import split_service
-from ..auth import get_current_user  # JWT Protection helper
+from database import get_db
+import models, schemas
+from services import split_service
+from auth import get_current_user
 
 router = APIRouter(
     prefix="/videos",

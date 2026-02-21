@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
-from .models import VideoStatus
+from models import VideoStatus
 
 # --- Sub-schemas for nested data ---
 

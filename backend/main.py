@@ -6,19 +6,12 @@ from sqlalchemy.orm import Session
 import os
 
 # Local imports
-from .database import engine, Base, get_db
-from .routes import video_routes
-# FAKE_USER_DB ab auth.py se aayega
-from .auth import create_access_token, verify_password, FAKE_USER_DB 
+from database import engine, Base, get_db
+from routes import video_routes
+from auth import create_access_token, verify_password, FAKE_USER_DB
 
-# -------------------------------
-# Database tables create karein
-# -------------------------------
 Base.metadata.create_all(bind=engine)
 
-# -------------------------------
-# FastAPI App Initialize karein
-# -------------------------------
 app = FastAPI(
     title="SyncMonster Studio API",
     description="Advanced Video Processing Backend with JWT Auth"
