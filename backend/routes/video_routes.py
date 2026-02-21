@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import shutil
 import os
+import cloudinary
+import cloudinary.uploader
 
 from database import get_db
 import models, schemas
@@ -12,6 +14,17 @@ from auth import get_current_user
 router = APIRouter(
     prefix="/videos",
     tags=["Videos"]
+)
+
+# ============================================================
+# Cloudinary Configuration
+# ============================================================
+# Ye automatically system environment variables se credentials uthayega.
+# Render par CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, aur CLOUDINARY_API_SECRET set karein.
+cloudinary.config(
+    cloud_name=os.getenv("Root"),
+    api_key=os.getenv("859614873262683"),
+    api_secret=os.getenv("sQL66BggVRJLVzlw5D_-XrX3Fyg")
 )
 
 # ============================================================
@@ -49,10 +62,10 @@ def background_split_task(video_id: int, segments_metadata: list, db_session_fac
 
 
 # ============================================================
-# 1. Create Video (PROTECTED - UploadFile Version)
+# 1. Create Video (Hybrid Storage - Cloud + Local Fallback)
 # ============================================================
 @router.post("/", response_model=schemas.VideoResponse)
-def create_video(
+async def create_video(
     title: str = Form(...),
     description: Optional[str] = Form(None),
     file: UploadFile = File(...),
@@ -64,15 +77,43 @@ def create_video(
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
 
-    file_location = f"{upload_dir}/{file.filename}"
+    # Local temporary path (needed for local processing or cloud upload buffer)
+    file_location = os.path.join(upload_dir, file.filename)
 
     with open(file_location, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    # Database fields initialize
+    db_video_url = None
+    db_file_path = file_location # Fallback local path
+
+    # 🚀 SERVER CHECK: If Cloudinary credentials exist, upload to cloud
+    if os.getenv("CLOUDINARY_CLOUD_NAME"):
+        try:
+            # Uploading to Cloudinary (Free tier supports up to 100MB videos)
+            upload_result = cloudinary.uploader.upload_large(
+                file_location,
+                resource_type="video",
+                folder="syncmonster_studio"
+            )
+            db_video_url = upload_result.get("secure_url")
+            
+            # Render temporary storage bachane ke liye local file delete karein
+            if os.path.exists(file_location):
+                os.remove(file_location)
+                
+        except Exception as e:
+            print(f"Cloudinary Upload Failed, falling back to local storage: {e}")
+            db_video_url = file_location # Local link fallback
+    else:
+        # 💻 LOCAL MACHINE: Always use local file path
+        db_video_url = file_location
+
     db_video = models.Video(
         title=title,
         description=description,
-        file_path=file_location,
+        file_path=db_file_path,
+        video_url=db_video_url, # Frontend isi URL ko use karega
         status=models.VideoStatus.UPLOADED
     )
 
