@@ -75,6 +75,7 @@ const VideoList = () => {
             <tbody>
               {videos.length > 0 ? (
                 videos.map(v => {
+                  console.log("yash v is",v);
                   const cfg = getStatusConfig(v.status);
                   return (
                     <tr key={v.id}>
@@ -92,8 +93,8 @@ const VideoList = () => {
                       </td>
                       <td className="text-center">
                         <span className={`badge rounded-pill px-4 py-2 fw-bold ${cfg.bg}`}>
-                          {v.status.toUpperCase()}
-                        </span>
+                        {(v.status ? v.status.toUpperCase() : 'PENDING')}                       
+                         </span>
                       </td>
                       <td className="text-center fw-bold fs-5">
                         {v.duration || '--'} <small className="text-muted">s</small>

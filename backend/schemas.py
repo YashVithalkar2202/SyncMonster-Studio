@@ -31,7 +31,8 @@ class VideoResponse(BaseModel):
     description: Optional[str] = None
     video_url: Optional[str] = None 
     duration: Optional[float] = None
-    file_path: Optional[str] = None 
+    file_path: Optional[str] = None
+    status: Optional[str] = "DRAFT" # Ye field yahan hona zaroori hai! 
     created_at: datetime
 
     class Config:
