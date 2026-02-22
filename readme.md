@@ -1,10 +1,8 @@
-Here is your properly formatted **GitHub `README.md`** (clean, professional, and markdown-ready).
-You can directly copy-paste this into your `README.md`.
-
 # 🎥 SyncMonster Studio: Neural Video Engine
 
-* **Swagger UI:** [http://localhost:8000/docs](https://www.google.com/search?q=http://localhost:8000/docs)
-* **Redoc:** [http://localhost:8000/redoc](https://www.google.com/search?q=http://localhost:8000/redoc)
+![image alt](https://github.com/YashVithalkar2202/SyncMonster-Studio/blob/main/image.png)
+
+![image alt](https://github.com/YashVithalkar2202/SyncMonster-Studio/blob/81322072eea901e56be5504c6054e8d508dbe8fc/Screenshot%20from%202026-02-14%2023-42-38.png)
 
 
 SyncMonster Studio is a professional-grade video asset management and processing platform.  
