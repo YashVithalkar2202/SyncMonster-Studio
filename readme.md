@@ -6,6 +6,9 @@
 
 ![image alt](https://github.com/YashVithalkar2202/SyncMonster-Studio/blob/cc7025cd7422ccc5bfa4839081e59bd83c73a410/Screenshot%20from%202026-02-22%2023-34-09.png)
 
+## 🌐 Live Demo
+🔗 **Frontend:** https://sync-monster-studio.vercel.app/login  
+---
 
 SyncMonster Studio is a professional-grade video asset management and processing platform.  
 Built for high-performance workflows, it enables users to upload real video assets, perform frame-accurate splitting using FFmpeg, and manage cloud-based storage.
