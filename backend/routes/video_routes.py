@@ -19,8 +19,7 @@ router = APIRouter(
 # ============================================================
 # Cloudinary Configuration (yash: Fixed logic)
 # ============================================================
-# IMPORTANT: Dashboard se credentials utha kar Render Environment Variables mein daalein.
-# Code mein os.getenv() ke andar Key ka NAAM aata hai, value nahi.
+
 cloudinary.config(
     cloud_name=os.getenv("Root"),
     api_key=os.getenv("859614873262683"),

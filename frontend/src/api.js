@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// 1. CHANGE: Hardcoded localhost ki jagah Environment Variable use karein
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // Create an axios instance with the base URL
@@ -16,7 +15,6 @@ export const loginUser = async (username, password) => {
     formData.append('username', username);
     formData.append('password', password);
     
-    // 2. CHANGE: Yahan bhi API_BASE use ho raha hai jo ab dynamic hai
     const res = await axios.post(`${API_BASE}/token`, formData);
     
     // Store the access token for future requests

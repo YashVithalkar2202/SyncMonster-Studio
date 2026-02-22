@@ -9,7 +9,6 @@ import { logoutUser } from './api';
 // --- Navbar Component ---
 const Navbar = () => {
   const navigate = useNavigate();
-  // Directly checking localStorage to ensure UI updates on refresh
   const token = localStorage.getItem('token');
 
   const handleLogout = () => {
@@ -28,13 +27,9 @@ const Navbar = () => {
         </Link>
         
         <div className="navbar-nav ms-auto align-items-center">
-          {/* Menu items sirf tab dikhenge jab user logged in ho */}
           {token && (
             <>
               <Link className="nav-item nav-link px-4 fw-bold text-white-50" to="/">Workspace</Link>
-              <Link className="btn btn-primary btn-lg ms-lg-3 px-5 rounded-pill shadow me-3" to="/create">
-                <span className="me-2">+</span> New Video
-              </Link>
               <button 
                 className="btn btn-outline-danger btn-lg px-4 rounded-pill fw-bold border-2"
                 onClick={handleLogout}
@@ -49,12 +44,9 @@ const Navbar = () => {
   );
 };
 
-// --- Protected Route Wrapper ---
-// Yeh component check karta hai ki user ke paas token hai ya nahi
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
   if (!token) {
-    // Agar token nahi hai, toh redirect to login
     return <Navigate to="/login" replace />;
   }
   return children;
@@ -68,7 +60,6 @@ function App() {
 
         <div className="container-fluid px-5 py-5">
           <Routes>
-            {/* Protected Routes: Inhe access karne ke liye login zaroori hai */}
             <Route 
               path="/" 
               element={<ProtectedRoute><VideoList /></ProtectedRoute>} 
@@ -82,10 +73,8 @@ function App() {
               element={<ProtectedRoute><CreateVideo /></ProtectedRoute>} 
             />
 
-            {/* Public Route: Login page hamesha accessible rahega */}
             <Route path="/login" element={<Login />} />
 
-            {/* Catch-all: Agar koi galat URL dale toh home par redirect (jo automatically auth check karega) */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
